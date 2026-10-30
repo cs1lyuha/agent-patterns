@@ -72,8 +72,9 @@ class SimLLM:
     # (prima latență în secunde, secunde per token de output)
 
     def __init__(self, skills: dict[str, Callable[[str, random.Random, bool], str]], *, seed: int = 0,
-                 error_rate: dict[str, float] | None = None) -> None:
+                 error_rate: dict[str, float] | None = None, context_tokens: int = 0) -> None:
         self.skills = skills
+        self.context_tokens = context_tokens  # system prompt + politici trimise la fiecare apel
         self.seed = seed
         self.counts: dict[str, int] = {}
         self.lock = threading.Lock()
@@ -95,7 +96,7 @@ class SimLLM:
         out_tokens = max(1, len(text) // 4)
         first, per_token = self.LATENCY[model]
         latency = first + per_token * out_tokens
-        trace.calls.append(Call(model, purpose, max(1, len(prompt) // 4), out_tokens, latency))
+        trace.calls.append(Call(model, purpose, self.context_tokens + max(1, len(prompt) // 4), out_tokens, latency))
         trace.latency_s += latency
         return text
 
